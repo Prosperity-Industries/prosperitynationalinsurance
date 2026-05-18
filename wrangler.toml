@@ -1,17 +1,16 @@
 # Workers Static Assets deploy for prosperitynationalinsurance.com
 #
-# - main: the Worker entry. Handles /api/lead, falls through to ASSETS.
-# - [assets]: served by env.ASSETS.fetch(...) for all non-/api routes.
+# - main: the Worker entry, handles /api/lead and falls through to ASSETS.
+# - [assets]: env.ASSETS.fetch() serves static files from /public.
 
 name = "prosperitynationalinsurance"
 main = "src/worker.js"
-compatibility_date = "2025-05-01"
+compatibility_date = "2024-12-01"
 
 [assets]
 directory = "./public"
 binding = "ASSETS"
-not_found_handling = "404-page"
-
-# Run the Worker BEFORE static assets so /api/* routes are handled.
-# (run_worker_first defaults to false in newer wrangler; setting explicit.)
+# run_worker_first lives under [assets]. With this true, the Worker
+# runs FIRST on every request; the Worker decides whether to call
+# env.ASSETS.fetch() (for static) or handle directly (for /api/*).
 run_worker_first = true

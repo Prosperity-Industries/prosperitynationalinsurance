@@ -1,12 +1,14 @@
 // Worker entry for prosperitynationalinsurance.com
 //
-// Handles two responsibilities:
-//   1. POST /api/lead   — accepts contact-form submissions, posts to Forge
-//                         JSON intake, optionally emails via Resend.
-//   2. Everything else  — delegates to env.ASSETS to serve the static site
-//                         from /public.
+// Handles:
+//   1. www → apex redirect (was previously in _redirects, but Workers Static
+//      Assets requires relative URLs in that file, so we do it here).
+//   2. POST /api/lead — accepts contact-form submissions, posts to Forge
+//      JSON intake, optionally emails via Resend.
+//   3. Everything else — delegates to env.ASSETS to serve the static site
+//      from /public.
 //
-// Env vars (set in dashboard → Workers → prosperitynationalinsurance → Settings → Variables):
+// Env vars (Workers → Settings → Variables):
 //   FORGE_INTAKE_URL  Required. Full URL incl. slug.
 //   NOTIFY_EMAIL      Default kirk@prosperityindustries.net.
 //   RESEND_API_KEY    Optional, enables email notification.
@@ -16,14 +18,21 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // Route /api/lead through our handler.
+    // www → apex 301 redirect
+    if (url.hostname.startsWith('www.')) {
+      const apexUrl = new URL(request.url);
+      apexUrl.hostname = url.hostname.slice(4);
+      return Response.redirect(apexUrl.toString(), 301);
+    }
+
+    // /api/lead handler
     if (url.pathname === '/api/lead') {
       if (request.method === 'OPTIONS') return handleOptions(env);
       if (request.method === 'POST')    return handleLead(request, env);
       return new Response('Method Not Allowed', { status: 405 });
     }
 
-    // Everything else: static assets.
+    // Static asset fallback
     return env.ASSETS.fetch(request);
   },
 };
@@ -63,7 +72,6 @@ async function handleLead(request, env) {
 
   const fullName = `${payload.first_name} ${payload.last_name}`.trim();
 
-  // ----- Forge JSON intake -----
   let forgeOk = false;
   let forgeItemId = null;
   let forgeError = null;
@@ -73,16 +81,14 @@ async function handleLead(request, env) {
         source: 'prosperitynationalinsurance.com',
         notes:  payload.notes || '',
         fields: stripEmpty({
-          // Person-builder keys (Forge intake → People app)
           name:  fullName,
           email: payload.email,
           phone: payload.phone,
-          // Prospect field external_ids
-          title:                 fullName,
-          'applicant-type':      payload.applicant_type,
-          'insurance-type':      payload.insurance_type,
-          'servicing-status':    'New',
-          'agent-name':          'Unassigned',
+          title:                  fullName,
+          'applicant-type':       payload.applicant_type,
+          'insurance-type':       payload.insurance_type,
+          'servicing-status':     'New',
+          'agent-name':           'Unassigned',
           'address-of-insurance': payload.property_address,
           notes: buildNotesBlock(payload),
         }),
@@ -106,7 +112,6 @@ async function handleLead(request, env) {
     forgeError = 'FORGE_INTAKE_URL not set';
   }
 
-  // ----- Email notification (best-effort) -----
   if (env.RESEND_API_KEY) {
     const to = env.NOTIFY_EMAIL || 'kirk@prosperityindustries.net';
     try {

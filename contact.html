@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact &amp; Quote Request — Prosperity National Insurance</title>
+  <meta name="description" content="Tell us about what you need to cover — we'll come back with options, not a sales pitch.">
+  <link rel="stylesheet" href="/assets/css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="/" class="brand-mark">
+      <span class="brand-text">
+        Prosperity National Insurance
+        <span class="tag">A Prosperity Industries Company</span>
+      </span>
+    </a>
+    <nav class="primary">
+      <a href="/coverage/homeowners.html">Coverage</a>
+      <a href="/about.html">About</a>
+      <a href="/contact.html">Contact</a>
+      <a href="/contact.html" class="btn">Get a Quote</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-header" style="border-bottom: 1px solid var(--border-soft); padding: 6rem 0 2rem;">
+  <div class="container">
+    <span class="eyebrow" style="font-size: 0.7rem; letter-spacing: 0.32em; text-transform: uppercase; color: var(--copper-muted);">Contact</span>
+    <h1 style="margin-top: 1rem;">Let's talk coverage.</h1>
+    <p style="max-width: 60ch; color: var(--text-muted); margin-top: 1rem;">
+      Fill out the form and we'll be in touch within one business day. Or call/email us directly — both work.
+    </p>
+  </div>
+</div>
+
+<section style="padding-top: 4rem;">
+  <div class="container">
+    <div class="contact-shell">
+      <form id="quoteForm" class="contact-form" novalidate>
+        <div class="row">
+          <div class="field">
+            <label for="first_name">First Name *</label>
+            <input type="text" id="first_name" name="first_name" required>
+          </div>
+          <div class="field">
+            <label for="last_name">Last Name *</label>
+            <input type="text" id="last_name" name="last_name" required>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="email">Email *</label>
+            <input type="email" id="email" name="email" required>
+          </div>
+          <div class="field">
+            <label for="phone">Phone *</label>
+            <input type="tel" id="phone" name="phone" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="applicant_type">I'm shopping as a…</label>
+          <select id="applicant_type" name="applicant_type">
+            <option value="">Select one</option>
+            <option value="Retail Buyer">Homeowner / Home Buyer</option>
+            <option value="Landlord">Landlord / Rental Owner</option>
+            <option value="Fix &amp; Flip">Fix &amp; Flip Investor</option>
+            <option value="Renter">Renter</option>
+            <option value="Commercial">Commercial Property Owner</option>
+            <option value="Business">Business Owner</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="insurance_type">Coverage I'm looking for</label>
+          <select id="insurance_type" name="insurance_type">
+            <option value="">Select one</option>
+            <option value="Owner Occupied">Homeowners (owner-occupied)</option>
+            <option value="Dwelling &amp; Fire">Landlord / Dwelling &amp; Fire</option>
+            <option value="Tenant">Renter's</option>
+            <option value="Vacant Building">Vacant Building</option>
+            <option value="Builders Risk">Builder's Risk</option>
+            <option value="COM-BOP">Commercial BOP</option>
+            <option value="COM-Prop &amp; Liability">Commercial Property &amp; Liability</option>
+            <option value="Auto">Auto</option>
+            <option value="Umbrella">Umbrella</option>
+            <option value="E&amp;O">E&amp;O / Professional Liability</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="property_address">Property Address (if applicable)</label>
+          <input type="text" id="property_address" name="property_address" placeholder="Street, City, State, ZIP">
+        </div>
+
+        <div class="field">
+          <label for="notes">Tell us about what you need to cover</label>
+          <textarea id="notes" name="notes" placeholder="Anything we should know — current carrier, renewal date, claims history, special situation, etc."></textarea>
+        </div>
+
+        <!-- Honeypot field — bots fill this, humans don't see it -->
+        <div style="position: absolute; left: -9999px;" aria-hidden="true">
+          <label>Leave this field blank</label>
+          <input type="text" name="website" tabindex="-1" autocomplete="off">
+        </div>
+
+        <button type="submit" class="btn btn-primary">Request a Quote</button>
+
+        <div id="formStatus" class="form-status"></div>
+      </form>
+
+      <div class="contact-side">
+        <h3>Direct lines</h3>
+
+        <div class="info-block">
+          <div class="label">Email</div>
+          <div class="value">
+            <a href="mailto:hello@prosperitynationalinsurance.com">hello@prosperitynationalinsurance.com</a>
+          </div>
+        </div>
+
+        <div class="info-block">
+          <div class="label">Service Area</div>
+          <div class="value">Pennsylvania &amp; New Jersey</div>
+        </div>
+
+        <div class="info-block">
+          <div class="label">Response Time</div>
+          <div class="value">Within one business day, every time. Usually faster.</div>
+        </div>
+
+        <div class="info-block">
+          <div class="label">Already a Customer?</div>
+          <div class="value">
+            COI requests, mortgagee changes, and policy questions — same email above. We turn most service requests around same-day.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-legal">
+      <span>© <span id="year">2026</span> Prosperity National Insurance. All rights reserved.</span>
+      <span><a href="/">Home</a> · <a href="/about.html">About</a> · <a href="/contact.html">Contact</a></span>
+    </div>
+  </div>
+</footer>
+
+<script src="/assets/js/contact.js" defer></script>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+
+</body>
+</html>

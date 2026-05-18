@@ -1,0 +1,4 @@
+# Force apex domain (handled by Cloudflare Page Rule too, but belt + suspenders)
+https://www.prosperitynationalinsurance.com/* https://prosperitynationalinsurance.com/:splat 301!
+
+# Future: .net → .com canonical

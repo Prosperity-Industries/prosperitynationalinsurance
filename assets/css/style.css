@@ -1,0 +1,566 @@
+/* =========================================================================
+   Prosperity National Insurance — brand stylesheet
+   Mirrors REIS dark-marble + copper aesthetic. No build step.
+   ========================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap');
+
+:root {
+  --copper:         #c19575;
+  --copper-bright:  #d4ad8a;
+  --copper-muted:   #a07a60;
+  --copper-deep:    #8a6647;
+  --bg-black:       #0e0e0e;
+  --bg-panel:       #161616;
+  --bg-card:        #1c1c1c;
+  --border-soft:    rgba(193, 149, 117, 0.18);
+  --border-strong:  rgba(193, 149, 117, 0.42);
+  --text-primary:   #ece4dc;
+  --text-muted:     #9a8a7c;
+  --accent-green:   #68d391;
+  --accent-red:     #fc8181;
+  --font-display:   'Cinzel', 'Times New Roman', serif;
+  --font-body:      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-black);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse at 20% 10%, rgba(193, 149, 117, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(138, 102, 71, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(193, 149, 117, 0.03) 0%, transparent 60%);
+  background-attachment: fixed;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--copper);
+}
+
+h1 { font-size: clamp(2.4rem, 5vw, 4rem); line-height: 1.15; }
+h2 { font-size: clamp(1.8rem, 3.5vw, 2.6rem); line-height: 1.25; margin-bottom: 1rem; }
+h3 { font-size: clamp(1.25rem, 2vw, 1.5rem); margin-bottom: 0.75rem; color: var(--copper-bright); }
+
+p { margin-bottom: 1rem; }
+
+a {
+  color: var(--copper-bright);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+a:hover { color: var(--copper); }
+
+/* ---------- Layout primitives ---------- */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+section {
+  padding: 5rem 0;
+}
+
+/* ---------- Header / Nav ---------- */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(14, 14, 14, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.site-header .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.brand-mark {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--copper);
+}
+
+.brand-mark .brand-text {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+}
+
+.brand-mark .brand-text .tag {
+  display: block;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: var(--copper-muted);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.brand-mark img {
+  height: 40px;
+  width: auto;
+}
+
+nav.primary {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+nav.primary a {
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+nav.primary a:hover { color: var(--copper); }
+
+.btn {
+  display: inline-block;
+  padding: 0.85rem 1.75rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  border-radius: 2px;
+  border: 1px solid var(--copper);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-decoration: none;
+  background: transparent;
+  color: var(--copper);
+}
+
+.btn:hover {
+  background: var(--copper);
+  color: var(--bg-black);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--copper) 0%, var(--copper-deep) 100%);
+  color: var(--bg-black);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--copper-bright) 0%, var(--copper) 100%);
+  color: var(--bg-black);
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  padding: 7rem 0 5rem;
+  position: relative;
+}
+
+.hero .eyebrow {
+  display: inline-block;
+  font-size: 0.75rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--copper-muted);
+  margin-bottom: 1.5rem;
+  border-left: 2px solid var(--copper);
+  padding-left: 0.75rem;
+}
+
+.hero h1 {
+  max-width: 16ch;
+  margin-bottom: 1.5rem;
+}
+
+.hero p.lede {
+  font-size: 1.2rem;
+  max-width: 56ch;
+  color: var(--text-primary);
+  margin-bottom: 2.5rem;
+}
+
+.hero .cta-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* ---------- Coverage grid ---------- */
+.coverage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+  margin-top: 3rem;
+}
+
+.coverage-card {
+  background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-panel) 100%);
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+  padding: 2rem 1.75rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.coverage-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--copper), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.coverage-card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-4px);
+}
+
+.coverage-card:hover::before { opacity: 1; }
+
+.coverage-card .icon {
+  font-size: 1.75rem;
+  color: var(--copper-bright);
+  margin-bottom: 1rem;
+}
+
+.coverage-card h3 {
+  color: var(--copper);
+  margin-bottom: 0.75rem;
+}
+
+.coverage-card p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+.coverage-card .learn-more {
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  color: var(--copper-bright);
+}
+
+/* ---------- Why-us section ---------- */
+.why-us {
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.why-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 2.5rem;
+  margin-top: 3rem;
+}
+
+.why-item h3 {
+  color: var(--copper-bright);
+  margin-bottom: 0.75rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+}
+
+.why-item p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.family-strip {
+  margin-top: 4rem;
+  padding: 2rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+  background: rgba(14, 14, 14, 0.6);
+}
+
+.family-strip .label {
+  font-size: 0.7rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--copper-muted);
+  margin-bottom: 1.25rem;
+  display: block;
+}
+
+.family-companies {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.5rem;
+}
+
+.family-companies .company {
+  font-family: var(--font-display);
+  color: var(--copper);
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+}
+
+.family-companies .company small {
+  display: block;
+  font-family: var(--font-body);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  letter-spacing: 0;
+}
+
+/* ---------- CTA banner ---------- */
+.cta-banner {
+  background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-panel) 100%);
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  padding: 3.5rem 2.5rem;
+  text-align: center;
+  margin: 4rem 0;
+}
+
+.cta-banner h2 {
+  color: var(--copper-bright);
+  margin-bottom: 1rem;
+}
+
+.cta-banner p {
+  max-width: 50ch;
+  margin: 0 auto 2rem;
+  color: var(--text-muted);
+}
+
+/* ---------- Contact form ---------- */
+.contact-shell {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 4rem;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .contact-shell { grid-template-columns: 1fr; gap: 2.5rem; }
+}
+
+.contact-form {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  padding: 2.5rem;
+}
+
+.contact-form .field { margin-bottom: 1.25rem; }
+
+.contact-form label {
+  display: block;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--copper-muted);
+  margin-bottom: 0.5rem;
+}
+
+.contact-form input,
+.contact-form select,
+.contact-form textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--bg-black);
+  border: 1px solid var(--border-soft);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.contact-form input:focus,
+.contact-form select:focus,
+.contact-form textarea:focus {
+  outline: none;
+  border-color: var(--copper);
+}
+
+.contact-form textarea { min-height: 120px; resize: vertical; }
+
+.contact-form .row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 480px) {
+  .contact-form .row { grid-template-columns: 1fr; }
+}
+
+.contact-form button[type="submit"] {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.form-status {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 3px;
+  font-size: 0.9rem;
+  display: none;
+}
+
+.form-status.success {
+  display: block;
+  background: rgba(104, 211, 145, 0.1);
+  border: 1px solid rgba(104, 211, 145, 0.4);
+  color: var(--accent-green);
+}
+
+.form-status.error {
+  display: block;
+  background: rgba(252, 129, 129, 0.1);
+  border: 1px solid rgba(252, 129, 129, 0.4);
+  color: var(--accent-red);
+}
+
+.contact-side h3 {
+  color: var(--copper);
+  margin-bottom: 1.5rem;
+}
+
+.contact-side .info-block {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border-soft);
+}
+.contact-side .info-block:last-child { border-bottom: none; }
+
+.contact-side .label {
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--copper-muted);
+  margin-bottom: 0.5rem;
+}
+
+.contact-side .value {
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+
+/* ---------- Footer ---------- */
+.site-footer {
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border-soft);
+  padding: 3rem 0 2rem;
+  margin-top: 4rem;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  gap: 2.5rem;
+  margin-bottom: 2.5rem;
+}
+
+@media (max-width: 768px) {
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+}
+
+.footer-grid h4 {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--copper-muted);
+  margin-bottom: 1rem;
+}
+
+.footer-grid ul { list-style: none; }
+.footer-grid li { margin-bottom: 0.6rem; }
+.footer-grid a { color: var(--text-muted); font-size: 0.92rem; }
+.footer-grid a:hover { color: var(--copper-bright); }
+
+.footer-legal {
+  border-top: 1px solid var(--border-soft);
+  padding-top: 2rem;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* ---------- Coverage detail page ---------- */
+.coverage-detail .page-header {
+  padding: 6rem 0 3rem;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.coverage-detail .page-header .eyebrow {
+  display: inline-block;
+  font-size: 0.7rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--copper-muted);
+  margin-bottom: 1rem;
+}
+
+.coverage-detail .content {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr;
+  gap: 4rem;
+  padding: 4rem 0;
+}
+
+@media (max-width: 900px) {
+  .coverage-detail .content { grid-template-columns: 1fr; gap: 2.5rem; }
+}
+
+.coverage-detail .content p { margin-bottom: 1.25rem; color: var(--text-primary); }
+
+.coverage-detail .content h3 { margin-top: 2rem; }
+.coverage-detail .content h3:first-child { margin-top: 0; }
+
+.coverage-detail .sidebar {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  padding: 2rem;
+  position: sticky;
+  top: 6rem;
+  align-self: start;
+}
+
+.coverage-detail .sidebar h4 {
+  font-family: var(--font-display);
+  color: var(--copper);
+  margin-bottom: 1rem;
+  font-size: 1.15rem;
+}
+
+.coverage-detail .sidebar ul { list-style: none; }
+.coverage-detail .sidebar li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-soft);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+.coverage-detail .sidebar li:last-child { border-bottom: none; }
+.coverage-detail .sidebar li::before { content: '◆ '; color: var(--copper); margin-right: 0.4rem; }
+

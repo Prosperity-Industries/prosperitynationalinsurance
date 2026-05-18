@@ -52,19 +52,27 @@ export async function onRequestPost(context) {
 
   if (env.FORGE_INTAKE_URL) {
     try {
+      // IMPORTANT: Forge's intake handler builds the Person record by reading
+      // name/email/phone from INSIDE payload.fields (not top-level). Those keys
+      // are not field external_ids on Prospects, so they're dropped when writing
+      // the Prospect's data — but the contact extractor picks them up first and
+      // creates (or matches) a Person, then auto-links the Person to the
+      // Prospect's `primary-contact` relation field. This preserves Kirk's
+      // People-as-root-of-all-contacts pattern.
       const forgePayload = {
-        // Top-level name/email/phone — Forge auto-creates a Person record
-        name:  fullName,
-        email: payload.email,
-        phone: payload.phone,
         source: 'prosperitynationalinsurance.com',
         notes:  payload.notes || '',
         fields: {
+          // Person-builder keys (consumed by Forge intake → People app)
+          name:  fullName,
+          email: payload.email,
+          phone: payload.phone,
+          // Prospect field external_ids
           title: fullName,
-          'applicant-type': payload.applicant_type || undefined,
-          'insurance-type': payload.insurance_type || undefined,
-          'servicing-status': 'New',
-          'agent-name': 'Unassigned',
+          'applicant-type':      payload.applicant_type || undefined,
+          'insurance-type':      payload.insurance_type || undefined,
+          'servicing-status':    'New',
+          'agent-name':          'Unassigned',
           'address-of-insurance': payload.property_address || undefined,
           notes: buildNotesBlock(payload),
         },
@@ -174,13 +182,4 @@ function buildEmailBody(p, fullName, forgeOk, itemId, forgeErr) {
       <tr><td style="padding:8px 0; color:#a07a60;">Phone</td><td><a href="tel:${esc(p.phone)}" style="color:#d4ad8a;">${esc(p.phone)}</a></td></tr>
       <tr><td style="padding:8px 0; color:#a07a60;">Applicant type</td><td>${esc(p.applicant_type || '—')}</td></tr>
       <tr><td style="padding:8px 0; color:#a07a60;">Coverage</td><td>${esc(p.insurance_type || '—')}</td></tr>
-      <tr><td style="padding:8px 0; color:#a07a60;">Property</td><td>${esc(p.property_address || '—')}</td></tr>
-    </table>
-    ${p.notes ? `<div style="margin-top:24px; padding-top:16px; border-top:1px solid rgba(193,149,117,0.18);"><div style="color:#a07a60; font-size:12px; letter-spacing:0.2em; text-transform:uppercase; margin-bottom:8px;">Notes</div><div style="white-space:pre-wrap;">${esc(p.notes)}</div></div>` : ''}
-  </div>
-</body></html>`;
-}
-
-function esc(s) {
-  return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-}
+      <tr><t

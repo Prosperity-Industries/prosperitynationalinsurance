@@ -1,0 +1,12 @@
+# Cloudflare deployment config for prosperitynationalinsurance.com
+#
+# Tells the unified Workers/Pages runtime this is a Pages-style project:
+# static assets served from the repo root, Pages Functions in functions/.
+# No build step required — files ship as-is.
+
+name = "prosperitynationalinsurance"
+compatibility_date = "2025-05-01"
+pages_build_output_dir = "."
+
+# Functions in functions/ are auto-detected:
+#   functions/api/lead.js  →  POST/OPTIONS /api/lead

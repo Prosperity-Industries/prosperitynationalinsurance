@@ -1,12 +1,17 @@
-# Cloudflare deployment config for prosperitynationalinsurance.com
+# Workers Static Assets deploy for prosperitynationalinsurance.com
 #
-# Tells the unified Workers/Pages runtime this is a Pages-style project:
-# static assets served from the repo root, Pages Functions in functions/.
-# No build step required — files ship as-is.
+# - main: the Worker entry. Handles /api/lead, falls through to ASSETS.
+# - [assets]: served by env.ASSETS.fetch(...) for all non-/api routes.
 
 name = "prosperitynationalinsurance"
+main = "src/worker.js"
 compatibility_date = "2025-05-01"
-pages_build_output_dir = "."
 
-# Functions in functions/ are auto-detected:
-#   functions/api/lead.js  →  POST/OPTIONS /api/lead
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "404-page"
+
+# Run the Worker BEFORE static assets so /api/* routes are handled.
+# (run_worker_first defaults to false in newer wrangler; setting explicit.)
+run_worker_first = true

@@ -28,7 +28,7 @@
       last_name:        form.last_name.value.trim(),
       email:            form.email.value.trim(),
       phone:            form.phone.value.trim(),
-      applicant_type:   form.applicant_type.value,
+      date_of_birth:    form.date_of_birth.value,
       insurance_type:   form.insurance_type.value,
       property_address: form.property_address.value.trim(),
       notes:            form.notes.value.trim(),
@@ -36,6 +36,10 @@
 
     if (!data.first_name || !data.last_name || !data.email || !data.phone) {
       showStatus('error', 'Please fill out name, email, and phone.');
+      return;
+    }
+    if (!data.date_of_birth) {
+      showStatus('error', 'Please enter your date of birth.');
       return;
     }
 
@@ -55,7 +59,14 @@
         throw new Error(err.error || 'Submission failed.');
       }
 
-      showStatus('success', 'Thanks — your request is in. We\'ll be in touch within one business day.');
+      showStatus('success', 'Thanks — your request is in. Now pick a time below and we\'ll call you then.');
+      // Re-render the scheduler prefilled with this lead's details, then scroll to it.
+      renderCalendly({
+        name:  (data.first_name + ' ' + data.last_name).trim(),
+        email: data.email,
+      });
+      const sched = document.getElementById('calendly-embed');
+      if (sched) sched.scrollIntoView({ behavior: 'smooth', block: 'center' });
       form.reset();
     } catch (err) {
       console.error('[contact-form]', err);
@@ -65,4 +76,39 @@
       submitBtn.textContent = 'Request a Quote';
     }
   });
+})();
+
+
+// ---- Inline Calendly scheduler -------------------------------------------
+// Renders the 30-min quote-call calendar right on the page. Slots are live.
+// After a form submit we re-render it prefilled with the lead's name + email.
+(function () {
+  var CAL_URL = 'https://calendly.com/george-customerfirstinsurance/30min?hide_gdpr_banner=1';
+  var el = document.getElementById('calendly-embed');
+  if (!el) return;
+
+  function doRender(prefill) {
+    if (!(window.Calendly && Calendly.initInlineWidget)) return false;
+    el.innerHTML = '';
+    Calendly.initInlineWidget({
+      url: CAL_URL,
+      parentElement: el,
+      prefill: prefill || {},
+    });
+    return true;
+  }
+
+  // Expose for the form-submit handler above.
+  window.renderCalendly = function (prefill) {
+    if (!doRender(prefill)) {
+      // widget.js not loaded yet — retry briefly
+      var tries = 0;
+      var t = setInterval(function () {
+        if (doRender(prefill) || ++tries > 40) clearInterval(t);
+      }, 250);
+    }
+  };
+
+  // Initial render (no prefill) once Calendly's async script is ready.
+  window.renderCalendly();
 })();

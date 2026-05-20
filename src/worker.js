@@ -85,7 +85,6 @@ async function handleLead(request, env) {
           email: payload.email,
           phone: payload.phone,
           title:                  fullName,
-          'applicant-type':       payload.applicant_type,
           'insurance-type':       payload.insurance_type,
           'servicing-status':     'New',
           'agent-name':           'Unassigned',
@@ -146,7 +145,7 @@ function stripEmpty(obj) {
 }
 function buildNotesBlock(p) {
   const lines = [];
-  if (p.applicant_type)   lines.push(`Applicant type: ${p.applicant_type}`);
+  if (p.date_of_birth)    lines.push(`Date of birth: ${p.date_of_birth}`);
   if (p.insurance_type)   lines.push(`Coverage requested: ${p.insurance_type}`);
   if (p.property_address) lines.push(`Property address: ${p.property_address}`);
   if (p.notes)            lines.push(`\n${p.notes}`);
@@ -170,7 +169,7 @@ ${status}
 <tr><td style="padding:8px 0;color:#a07a60;width:140px;">Name</td><td>${esc(fullName)}</td></tr>
 <tr><td style="padding:8px 0;color:#a07a60;">Email</td><td><a href="mailto:${esc(p.email)}" style="color:#d4ad8a;">${esc(p.email)}</a></td></tr>
 <tr><td style="padding:8px 0;color:#a07a60;">Phone</td><td><a href="tel:${esc(p.phone)}" style="color:#d4ad8a;">${esc(p.phone)}</a></td></tr>
-<tr><td style="padding:8px 0;color:#a07a60;">Applicant type</td><td>${esc(p.applicant_type || '—')}</td></tr>
+<tr><td style="padding:8px 0;color:#a07a60;">Date of birth</td><td>${esc(p.date_of_birth || '—')}</td></tr>
 <tr><td style="padding:8px 0;color:#a07a60;">Coverage</td><td>${esc(p.insurance_type || '—')}</td></tr>
 <tr><td style="padding:8px 0;color:#a07a60;">Property</td><td>${esc(p.property_address || '—')}</td></tr>
 </table>

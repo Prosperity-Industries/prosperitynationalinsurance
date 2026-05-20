@@ -62,17 +62,15 @@
           </div>
         </div>
 
-        <div class="field">
-          <label for="applicant_type">I'm shopping as a…</label>
-          <select id="applicant_type" name="applicant_type">
-            <option value="">Select one</option>
-            <option value="Retail Buyer">Homeowner / Home Buyer</option>
-            <option value="Landlord">Landlord / Rental Owner</option>
-            <option value="Fix &amp; Flip">Fix &amp; Flip Investor</option>
-            <option value="Renter">Renter</option>
-            <option value="Commercial">Commercial Property Owner</option>
-            <option value="Business">Business Owner</option>
-          </select>
+        <div class="row">
+          <div class="field">
+            <label for="date_of_birth">Date of Birth *</label>
+            <input type="date" id="date_of_birth" name="date_of_birth" required max="2008-12-31">
+          </div>
+          <div class="field">
+            <label for="property_address">Property Address (if applicable)</label>
+            <input type="text" id="property_address" name="property_address" placeholder="Street, City, State, ZIP">
+          </div>
         </div>
 
         <div class="field">
@@ -90,11 +88,6 @@
             <option value="Umbrella">Umbrella</option>
             <option value="E&amp;O">E&amp;O / Professional Liability</option>
           </select>
-        </div>
-
-        <div class="field">
-          <label for="property_address">Property Address (if applicable)</label>
-          <input type="text" id="property_address" name="property_address" placeholder="Street, City, State, ZIP">
         </div>
 
         <div class="field">
@@ -144,6 +137,20 @@
   </div>
 </section>
 
+<section class="schedule-section" style="padding: 1rem 0 5rem;">
+  <div class="container">
+    <div class="schedule-head" style="text-align:center; max-width:60ch; margin:0 auto 2.5rem;">
+      <span class="eyebrow" style="font-size:0.7rem; letter-spacing:0.32em; text-transform:uppercase; color:var(--copper-muted);">Schedule</span>
+      <h2 style="margin-top:1rem;">Or grab a time right now.</h2>
+      <p style="color:var(--text-muted); margin-top:1rem;">
+        A quote needs a quick conversation. Pick a 30-minute slot below and we'll call you then.
+        Submit the form above first and we'll prefill your details into the calendar automatically.
+      </p>
+    </div>
+    <div id="calendly-embed" style="min-width:320px; height:720px; background:var(--bg-elevated, #1c1c1c); border-radius:8px;"></div>
+  </div>
+</section>
+
 <footer class="site-footer">
   <div class="container">
     <div class="footer-legal">
@@ -153,6 +160,7 @@
   </div>
 </footer>
 
+<script src="https://assets.calendly.com/assets/external/widget.js" async></script>
 <script src="/assets/js/contact.js" defer></script>
 <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 

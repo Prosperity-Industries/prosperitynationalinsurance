@@ -70,7 +70,7 @@
       form.reset();
     } catch (err) {
       console.error('[contact-form]', err);
-      showStatus('error', 'Sorry — something went wrong. Please email hello@prosperitynationalinsurance.com directly and we\'ll get right on it.');
+      showStatus('error', 'Sorry — something went wrong. Please use the Email Us button on this page, or try again in a moment.');
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = 'Request a Quote';

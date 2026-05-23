@@ -79,36 +79,71 @@
 })();
 
 
-// ---- Inline Calendly scheduler -------------------------------------------
-// Renders the 30-min quote-call calendar right on the page. Slots are live.
-// After a form submit we re-render it prefilled with the lead's name + email.
+// ---- Inline Calendly scheduler (lazy-loaded) -----------------------------
+// widget.js is a heavy, render-blocking third-party script. We defer loading
+// it until the scheduler section nears the viewport (or a form submit needs
+// it prefilled). This keeps the contact page's initial render fast and
+// non-blocking. The form -> calendar prefill behavior is preserved.
 (function () {
-  var CAL_URL = 'https://calendly.com/george-customerfirstinsurance/30min?hide_gdpr_banner=1';
+  var CAL_URL   = 'https://calendly.com/george-customerfirstinsurance/30min?hide_gdpr_banner=1';
+  var WIDGET_JS = 'https://assets.calendly.com/assets/external/widget.js';
   var el = document.getElementById('calendly-embed');
   if (!el) return;
+
+  var scriptState = 'idle';  // idle | loading | ready
+  var scriptCbs = [];
+
+  function ensureScript(cb) {
+    if (scriptState === 'ready') return cb();
+    scriptCbs.push(cb);
+    if (scriptState === 'loading') return;
+    scriptState = 'loading';
+    var s = document.createElement('script');
+    s.src = WIDGET_JS;
+    s.async = true;
+    s.onload = function () {
+      scriptState = 'ready';
+      var cbs = scriptCbs.splice(0);
+      cbs.forEach(function (fn) { fn(); });
+    };
+    s.onerror = function () { scriptState = 'idle'; scriptCbs.length = 0; };
+    document.head.appendChild(s);
+  }
 
   function doRender(prefill) {
     if (!(window.Calendly && Calendly.initInlineWidget)) return false;
     el.innerHTML = '';
-    Calendly.initInlineWidget({
-      url: CAL_URL,
-      parentElement: el,
-      prefill: prefill || {},
-    });
+    Calendly.initInlineWidget({ url: CAL_URL, parentElement: el, prefill: prefill || {} });
     return true;
   }
 
-  // Expose for the form-submit handler above.
+  var rendered = false;
+
+  // Loads widget.js on demand, then renders (with optional prefill).
   window.renderCalendly = function (prefill) {
-    if (!doRender(prefill)) {
-      // widget.js not loaded yet — retry briefly
-      var tries = 0;
-      var t = setInterval(function () {
-        if (doRender(prefill) || ++tries > 40) clearInterval(t);
-      }, 250);
-    }
+    ensureScript(function () {
+      if (!doRender(prefill)) {
+        var tries = 0;
+        var t = setInterval(function () {
+          if (doRender(prefill) || ++tries > 40) clearInterval(t);
+        }, 250);
+      }
+      rendered = true;
+    });
   };
 
-  // Initial render (no prefill) once Calendly's async script is ready.
-  window.renderCalendly();
+  // Lazy trigger: only load + render when the scheduler nears the viewport.
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting && !rendered) {
+          window.renderCalendly();
+          io.disconnect();
+        }
+      });
+    }, { rootMargin: '300px' });
+    io.observe(el);
+  } else {
+    window.renderCalendly();
+  }
 })();

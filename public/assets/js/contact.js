@@ -34,6 +34,13 @@
       notes:            form.notes.value.trim(),
     };
 
+    // Attach first-touch attribution (UTMs / referrer / landing page) so the
+    // lead carries its ad source into Forge. Captured by attribution.js.
+    try {
+      var attr = JSON.parse(sessionStorage.getItem('pni_attribution') || '{}');
+      if (attr && Object.keys(attr).length) data.attribution = attr;
+    } catch (e) { /* no-op */ }
+
     if (!data.first_name || !data.last_name || !data.email || !data.phone) {
       showStatus('error', 'Please fill out name, email, and phone.');
       return;

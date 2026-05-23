@@ -84,7 +84,9 @@ async function handleLead(request, env) {
   if (env.FORGE_INTAKE_URL) {
     try {
       const forgePayload = {
-        source: 'prosperitynationalinsurance.com',
+        source: (payload.attribution && payload.attribution.utm_source)
+          ? `prosperitynationalinsurance.com / ${String(payload.attribution.utm_source).slice(0, 60)}`
+          : 'prosperitynationalinsurance.com',
         notes:  payload.notes || '',
         fields: stripEmpty({
           name:  fullName,
@@ -288,6 +290,15 @@ function buildNotesBlock(p) {
   if (p.insurance_type)   lines.push(`Coverage requested: ${p.insurance_type}`);
   if (p.property_address) lines.push(`Property address: ${p.property_address}`);
   if (p.notes)            lines.push(`\n${p.notes}`);
+  const a = (p.attribution && typeof p.attribution === 'object') ? p.attribution : null;
+  if (a) {
+    const al = [];
+    ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','gclid','fbclid','msclkid']
+      .forEach((k) => { if (a[k]) al.push(`${k}: ${a[k]}`); });
+    if (a.landing_page) al.push(`Landing page: ${a.landing_page}`);
+    if (a.referrer)     al.push(`Referrer: ${a.referrer}`);
+    if (al.length) { lines.push(`\n--- Lead source ---`); lines.push(al.join('\n')); }
+  }
   lines.push(`\n--- Submitted via prosperitynationalinsurance.com ---`);
   lines.push(`Submitted: ${new Date().toISOString()}`);
   return lines.join('\n');

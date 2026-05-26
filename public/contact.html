@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Contact &amp; Quote Request — Prosperity National Insurance</title>
   <meta name="description" content="Tell us about what you need to cover — we'll come back with options, not a sales pitch.">
-  <link rel="stylesheet" href="/assets/css/style.css?v=20260520">
+  <link rel="stylesheet" href="/assets/css/style.css?v=20260526">
   <!-- SEO: canonical, Open Graph, Twitter, structured data (added 2026-05-23) -->
   <link rel="canonical" href="https://prosperitynationalinsurance.com/contact">
   <meta property="og:site_name" content="Prosperity National Insurance">
@@ -201,14 +201,26 @@
 <section class="schedule-section" style="padding: 1rem 0 5rem;">
   <div class="container">
     <div class="schedule-head" style="text-align:center; max-width:60ch; margin:0 auto 2.5rem;">
-      <span class="eyebrow" style="font-size:0.7rem; letter-spacing:0.32em; text-transform:uppercase; color:var(--copper-muted);">Schedule</span>
-      <h2 style="margin-top:1rem;">Or grab a time right now.</h2>
-      <p style="color:var(--text-muted); margin-top:1rem;">
-        A quote needs a quick conversation. Pick a 30-minute slot below and we'll call you then.
-        Submit the form above first and we'll prefill your details into the calendar automatically.
+      <span class="eyebrow" style="font-size:0.7rem; letter-spacing:0.32em; text-transform:uppercase; color:var(--copper-muted);">Pick a consultation time</span>
+      <h2 style="margin-top:1rem;">Grab a 30-minute slot.</h2>
+      <p id="slotIntro" style="color:var(--text-muted); margin-top:1rem;">
+        <span id="slotCount">Loading open times…</span>
+        <span style="display:block; margin-top:0.5rem; font-size:0.85rem;">All times shown in your local timezone.</span>
       </p>
     </div>
-    <div id="calendly-embed" style="min-width:320px; height:720px; background:var(--bg-elevated, #1c1c1c); border-radius:8px;"></div>
+
+    <div id="slotGrid" class="slot-grid" role="list" aria-live="polite" aria-busy="true"></div>
+
+    <div id="slotEmpty" class="slot-empty" hidden>
+      No open times are showing right now.
+      <a href="tel:+12155157761" style="color:var(--copper-bright); font-weight:600;">Call (215) 515-7761</a>
+      or <a href="mailto:quote@inbox.prosperitynationalinsurance.com" style="color:var(--copper-bright); font-weight:600;">email us</a>
+      and we’ll get you on the calendar.
+    </div>
+
+    <p style="text-align:center; margin-top:2.5rem;">
+      <a id="scheduleCta" href="https://calendly.com/george-customerfirstinsurance/30min" target="_blank" rel="noopener" class="btn btn-primary">Schedule consultation</a>
+    </p>
   </div>
 </section>
 
@@ -225,7 +237,8 @@
 </footer>
 
 <script src="/assets/js/attribution.js?v=20260523" defer></script>
-<script src="/assets/js/contact.js?v=20260523" defer></script>
+<script src="/assets/js/contact.js?v=20260526" defer></script>
+<script src="/assets/js/calendly-grid.js?v=20260526" defer></script>
 <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 
 </body>

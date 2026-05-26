@@ -1,44 +1,55 @@
 // Worker entry for prosperitynationalinsurance.com
 //
 // Handles:
-//   1. www → apex redirect (was previously in _redirects, but Workers Static
-//      Assets requires relative URLs in that file, so we do it here).
+//   1. www → apex redirect.
 //   2. POST /api/lead — accepts contact-form submissions, posts to Forge
 //      JSON intake, optionally emails via Resend.
-//   3. Everything else — delegates to env.ASSETS to serve the static site
-//      from /public.
+//   3. POST /api/inbound-email — SendGrid Inbound Parse webhook.
+//   4. GET  /api/availability — proxy to Calendly's available-times API
+//      (CALENDLY_TOKEN kept server-side, never reaches the browser).
+//   5. Everything else — delegates to env.ASSETS.
 //
-// Env vars (Workers → Settings → Variables):
-//   FORGE_INTAKE_URL  Required. Full URL incl. slug.
-//   NOTIFY_EMAIL      Default kirk@prosperityindustries.net.
-//   RESEND_API_KEY    Optional, enables email notification.
-//   ALLOWED_ORIGIN    Default https://prosperitynationalinsurance.com.
+// Env vars (Workers → Settings → Variables / Secrets):
+//   FORGE_INTAKE_URL    Required for /api/lead. Full URL incl. slug.
+//   NOTIFY_EMAIL        Default kirk@prosperityindustries.net.
+//   RESEND_API_KEY      Optional, enables Resend email notification.
+//   SENDGRID_API_KEY    Optional, enables SendGrid forwarding for inbound.
+//   ALLOWED_ORIGIN      Default https://prosperitynationalinsurance.com.
+//   CALENDLY_TOKEN      Required for /api/availability. Type: Secret.
+//   CALENDLY_EVENT_URI  Optional override. Defaults to George's 30min.
+
+const DEFAULT_CALENDLY_EVENT_URI =
+  'https://api.calendly.com/event_types/2b9ffdf8-b290-4a53-b458-ad48b198b191';
+const DEFAULT_SCHEDULING_BASE =
+  'https://calendly.com/george-customerfirstinsurance/30min';
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // www → apex 301 redirect
     if (url.hostname.startsWith('www.')) {
       const apexUrl = new URL(request.url);
       apexUrl.hostname = url.hostname.slice(4);
       return Response.redirect(apexUrl.toString(), 301);
     }
 
-    // /api/lead handler
     if (url.pathname === '/api/lead') {
       if (request.method === 'OPTIONS') return handleOptions(env);
       if (request.method === 'POST')    return handleLead(request, env);
       return new Response('Method Not Allowed', { status: 405 });
     }
 
-    // /api/inbound-email — SendGrid Inbound Parse webhook (hello@ + all PNI mail)
     if (url.pathname === '/api/inbound-email') {
       if (request.method === 'POST') return handleInboundEmail(request, env);
       return new Response('Method Not Allowed', { status: 405 });
     }
 
-    // Static asset fallback
+    if (url.pathname === '/api/availability') {
+      if (request.method === 'OPTIONS') return handleOptions(env);
+      if (request.method === 'GET')     return handleAvailability(request, env);
+      return new Response('Method Not Allowed', { status: 405 });
+    }
+
     return env.ASSETS.fetch(request);
   },
 };
@@ -47,7 +58,7 @@ function corsHeaders(env) {
   const allowed = env.ALLOWED_ORIGIN || 'https://prosperitynationalinsurance.com';
   return {
     'Access-Control-Allow-Origin':  allowed,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
 }
@@ -59,6 +70,55 @@ function handleOptions(env) {
   });
 }
 
+// --- /api/availability ----------------------------------------------------
+async function handleAvailability(_request, env) {
+  const headers = {
+    'Content-Type': 'application/json',
+    ...corsHeaders(env),
+    'Cache-Control': 'public, max-age=60',
+  };
+  const token  = env.CALENDLY_TOKEN;
+  const evtUri = env.CALENDLY_EVENT_URI || DEFAULT_CALENDLY_EVENT_URI;
+  if (!token) {
+    return new Response(JSON.stringify({ error: 'calendar not configured' }),
+      { status: 503, headers });
+  }
+
+  // Calendly requires start_time strictly in the future; max 7-day window.
+  const now   = new Date();
+  const start = new Date(now.getTime() + 60_000).toISOString();
+  const end   = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const apiUrl = 'https://api.calendly.com/event_type_available_times'
+    + '?event_type='  + encodeURIComponent(evtUri)
+    + '&start_time='  + encodeURIComponent(start)
+    + '&end_time='    + encodeURIComponent(end);
+
+  let r;
+  try {
+    r = await fetch(apiUrl, { headers: { Authorization: `Bearer ${token}` } });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: 'calendar fetch failed', detail: String(e.message || e) }),
+      { status: 502, headers });
+  }
+  if (!r.ok) {
+    const body = await r.text();
+    return new Response(JSON.stringify({ error: `calendly ${r.status}`, detail: body.slice(0, 400) }),
+      { status: 502, headers });
+  }
+  const data = await r.json();
+  const slots = (data.collection || [])
+    .filter(s => s.status === 'available' && (s.invitees_remaining ?? 1) > 0)
+    .map(s => ({ start_time: s.start_time, scheduling_url: s.scheduling_url }));
+
+  return new Response(JSON.stringify({
+    slots,
+    count: slots.length,
+    scheduling_base: DEFAULT_SCHEDULING_BASE,
+  }), { status: 200, headers });
+}
+
+// --- /api/lead ------------------------------------------------------------
 async function handleLead(request, env) {
   const headers = { 'Content-Type': 'application/json', ...corsHeaders(env) };
 
@@ -151,17 +211,15 @@ const INBOUND_DOMAINS = new Set([
   'inbox.prosperitynationalinsurance.com',
 ]);
 
+// --- /api/inbound-email ---------------------------------------------------
 async function handleInboundEmail(request, env) {
-  // SendGrid Inbound Parse POSTs multipart/form-data. With "POST the raw,
-  // full MIME message" OFF, we get parsed fields: from, to, subject, text,
-  // html, envelope, spam_score, spam_report, etc.
   let form;
   try { form = await request.formData(); }
   catch { return new Response('bad form', { status: 400 }); }
 
   const get = (k) => { const v = form.get(k); return v == null ? '' : String(v); };
 
-  const fromRaw   = get('from');                 // e.g. "Jane Doe <jane@x.com>"
+  const fromRaw   = get('from');
   const subject   = get('subject');
   const textBody  = get('text');
   const htmlBody  = get('html');
@@ -170,7 +228,6 @@ async function handleInboundEmail(request, env) {
   const threshold = parseFloat(env.SPAM_THRESHOLD || '5');
   const notifyTo  = env.NOTIFY_EMAIL || 'kirk@prosperityindustries.net';
 
-  // Parse sender name + email out of the From header.
   const m = fromRaw.match(/^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/);
   const senderEmail = (m ? m[2] : fromRaw).trim();
   const senderName  = (m ? m[1].trim() : '') || (senderEmail.split('@')[0] || 'Website Email');
@@ -190,7 +247,6 @@ async function handleInboundEmail(request, env) {
   const isSpam = spamScore > threshold || selfSpoofed;
   const bodyText = textBody || stripHtml(htmlBody);
 
-  // 1) Clean mail → create a Forge Prospect via the existing JSON intake.
   let forgeOk = false, forgeItemId = null, forgeError = null;
   if (!isSpam && env.FORGE_INTAKE_URL && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(senderEmail)) {
     try {
@@ -226,13 +282,11 @@ async function handleInboundEmail(request, env) {
     } catch (e) { forgeError = String(e.message || e); }
   }
 
-  // 2) Forward a copy to the human inbox (clean → normal; spam → flagged).
   await forwardInbound(env, {
     notifyTo, fromRaw, senderEmail, senderName, subject, bodyText, htmlBody,
     spamScore, isSpam, selfSpoofed, forgeOk, forgeItemId, forgeError, toField,
   });
 
-  // Always 200 so SendGrid doesn't retry-storm; we logged/handled internally.
   return new Response(JSON.stringify({ ok: true, spam: isSpam, forge: forgeOk }), {
     status: 200, headers: { 'Content-Type': 'application/json' },
   });
@@ -258,7 +312,6 @@ ${statusLine}
 <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(193,149,117,0.18);white-space:pre-wrap;">${esc(ctx.bodyText || '(no body)')}</div>
 </div></body></html>`;
 
-  // Prefer SendGrid (we already route mail through it); fall back to Resend.
   if (env.SENDGRID_API_KEY) {
     try {
       await fetch('https://api.sendgrid.com/v3/mail/send', {

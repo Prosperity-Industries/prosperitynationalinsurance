@@ -67,12 +67,14 @@
       }
 
       showStatus('success', 'Thanks — your request is in. Now pick a time below and we\'ll call you then.');
-      // Re-render the scheduler prefilled with this lead's details, then scroll to it.
-      renderCalendly({
-        name:  (data.first_name + ' ' + data.last_name).trim(),
-        email: data.email,
-      });
-      const sched = document.getElementById('calendly-embed');
+      // Layer prefill onto every slot button + the CTA, then scroll to the grid.
+      if (typeof window.setSchedulerPrefill === 'function') {
+        window.setSchedulerPrefill({
+          name:  (data.first_name + ' ' + data.last_name).trim(),
+          email: data.email,
+        });
+      }
+      const sched = document.getElementById('slotGrid');
       if (sched) sched.scrollIntoView({ behavior: 'smooth', block: 'center' });
       form.reset();
     } catch (err) {
@@ -86,71 +88,3 @@
 })();
 
 
-// ---- Inline Calendly scheduler (lazy-loaded) -----------------------------
-// widget.js is a heavy, render-blocking third-party script. We defer loading
-// it until the scheduler section nears the viewport (or a form submit needs
-// it prefilled). This keeps the contact page's initial render fast and
-// non-blocking. The form -> calendar prefill behavior is preserved.
-(function () {
-  var CAL_URL   = 'https://calendly.com/george-customerfirstinsurance/30min?hide_gdpr_banner=1';
-  var WIDGET_JS = 'https://assets.calendly.com/assets/external/widget.js';
-  var el = document.getElementById('calendly-embed');
-  if (!el) return;
-
-  var scriptState = 'idle';  // idle | loading | ready
-  var scriptCbs = [];
-
-  function ensureScript(cb) {
-    if (scriptState === 'ready') return cb();
-    scriptCbs.push(cb);
-    if (scriptState === 'loading') return;
-    scriptState = 'loading';
-    var s = document.createElement('script');
-    s.src = WIDGET_JS;
-    s.async = true;
-    s.onload = function () {
-      scriptState = 'ready';
-      var cbs = scriptCbs.splice(0);
-      cbs.forEach(function (fn) { fn(); });
-    };
-    s.onerror = function () { scriptState = 'idle'; scriptCbs.length = 0; };
-    document.head.appendChild(s);
-  }
-
-  function doRender(prefill) {
-    if (!(window.Calendly && Calendly.initInlineWidget)) return false;
-    el.innerHTML = '';
-    Calendly.initInlineWidget({ url: CAL_URL, parentElement: el, prefill: prefill || {} });
-    return true;
-  }
-
-  var rendered = false;
-
-  // Loads widget.js on demand, then renders (with optional prefill).
-  window.renderCalendly = function (prefill) {
-    ensureScript(function () {
-      if (!doRender(prefill)) {
-        var tries = 0;
-        var t = setInterval(function () {
-          if (doRender(prefill) || ++tries > 40) clearInterval(t);
-        }, 250);
-      }
-      rendered = true;
-    });
-  };
-
-  // Lazy trigger: only load + render when the scheduler nears the viewport.
-  if ('IntersectionObserver' in window) {
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting && !rendered) {
-          window.renderCalendly();
-          io.disconnect();
-        }
-      });
-    }, { rootMargin: '300px' });
-    io.observe(el);
-  } else {
-    window.renderCalendly();
-  }
-})();

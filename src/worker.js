@@ -145,6 +145,12 @@ async function handleLead(request, env) {
   return new Response(JSON.stringify({ ok: true, item_id: forgeItemId }), { status: 200, headers });
 }
 
+// Domains that only ever RECEIVE mail for us. A From: address on one of
+// these is forged.
+const INBOUND_DOMAINS = new Set([
+  'inbox.prosperitynationalinsurance.com',
+]);
+
 async function handleInboundEmail(request, env) {
   // SendGrid Inbound Parse POSTs multipart/form-data. With "POST the raw,
   // full MIME message" OFF, we get parsed fields: from, to, subject, text,
@@ -161,15 +167,22 @@ async function handleInboundEmail(request, env) {
   const htmlBody  = get('html');
   const toField   = get('to');
   const spamScore = parseFloat(get('spam_score')) || 0;
-  const threshold = parseFloat(env.SPAM_THRESHOLD || '5');
+  const threshold = parseFloat(env.SPAM_THRESHOLD || '2');
   const notifyTo  = env.NOTIFY_EMAIL || 'kirk@prosperityindustries.net';
 
   // Parse sender name + email out of the From header.
   const m = fromRaw.match(/^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/);
   const senderEmail = (m ? m[2] : fromRaw).trim();
   const senderName  = (m ? m[1].trim() : '') || (senderEmail.split('@')[0] || 'Website Email');
+  const senderDomain = (senderEmail.split('@')[1] || '').toLowerCase();
 
-  const isSpam = spamScore >= threshold;
+  // Anything ABOVE the threshold is quarantined: forwarded to the human
+  // inbox, never written to Forge. Default dropped 5 -> 2 on 2026-08-12,
+  // after a 3.2-scoring phishing mail became a Prospect.
+  // Self-spoofed mail (From: one of our own inbound-parse domains) is
+  // always quarantined regardless of score.
+  const selfSpoofed = senderDomain !== '' && INBOUND_DOMAINS.has(senderDomain);
+  const isSpam = spamScore > threshold || selfSpoofed;
   const bodyText = textBody || stripHtml(htmlBody);
 
   // 1) Clean mail → create a Forge Prospect via the existing JSON intake.
@@ -211,7 +224,7 @@ async function handleInboundEmail(request, env) {
   // 2) Forward a copy to the human inbox (clean → normal; spam → flagged).
   await forwardInbound(env, {
     notifyTo, fromRaw, senderEmail, senderName, subject, bodyText, htmlBody,
-    spamScore, isSpam, forgeOk, forgeItemId, forgeError, toField,
+    spamScore, isSpam, selfSpoofed, forgeOk, forgeItemId, forgeError, toField,
   });
 
   // Always 200 so SendGrid doesn't retry-storm; we logged/handled internally.
@@ -224,7 +237,7 @@ async function forwardInbound(env, ctx) {
   const tag = ctx.isSpam ? '[SPAM?] ' : '';
   const subjectLine = `${tag}Fwd: ${ctx.subject || '(no subject)'} — via PNI website`;
   const statusLine = ctx.isSpam
-    ? `<p style="color:#fc8181;">Flagged as spam (score ${ctx.spamScore}) — NOT added to Forge.</p>`
+    ? `<p style="color:#fc8181;">Quarantined${ctx.selfSpoofed ? ' — forged sender domain' : ` (spam score ${ctx.spamScore})`} — NOT added to Forge.</p>`
     : (ctx.forgeOk
         ? `<p style="color:#68d391;">Added to Forge Prospects${ctx.forgeItemId ? ` (item ${ctx.forgeItemId})` : ''}.</p>`
         : `<p style="color:#fc8181;">Forge intake failed: ${esc(ctx.forgeError || 'unknown')}. Add manually.</p>`);

@@ -167,7 +167,7 @@ async function handleInboundEmail(request, env) {
   const htmlBody  = get('html');
   const toField   = get('to');
   const spamScore = parseFloat(get('spam_score')) || 0;
-  const threshold = parseFloat(env.SPAM_THRESHOLD || '2');
+  const threshold = parseFloat(env.SPAM_THRESHOLD || '5');
   const notifyTo  = env.NOTIFY_EMAIL || 'kirk@prosperityindustries.net';
 
   // Parse sender name + email out of the From header.
@@ -176,11 +176,16 @@ async function handleInboundEmail(request, env) {
   const senderName  = (m ? m[1].trim() : '') || (senderEmail.split('@')[0] || 'Website Email');
   const senderDomain = (senderEmail.split('@')[1] || '').toLowerCase();
 
-  // Anything ABOVE the threshold is quarantined: forwarded to the human
-  // inbox, never written to Forge. Default dropped 5 -> 2 on 2026-08-12,
-  // after a 3.2-scoring phishing mail became a Prospect.
+  // Anything ABOVE the threshold is quarantined: NOT written to Forge, and
+  // forwarded to the human inbox ONLY if forwardInbound has a mail key.
+  // 2026-08-12: neither SENDGRID_API_KEY nor RESEND_API_KEY is set on this
+  // Worker, so quarantine currently means destroyed. The default is
+  // therefore held at 5 - a borderline mail is better off as a visible
+  // Prospect you can delete than as a customer enquiry nobody ever sees.
+  // Tighten this once a mail key exists.
   // Self-spoofed mail (From: one of our own inbound-parse domains) is
-  // always quarantined regardless of score.
+  // always quarantined regardless of score - real customer mail never
+  // originates there, so nothing legitimate is lost.
   const selfSpoofed = senderDomain !== '' && INBOUND_DOMAINS.has(senderDomain);
   const isSpam = spamScore > threshold || selfSpoofed;
   const bodyText = textBody || stripHtml(htmlBody);

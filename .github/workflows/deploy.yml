@@ -1,0 +1,49 @@
+name: Deploy to Cloudflare
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-prosperitynationalinsurance
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Guard: never publish an empty assets bundle again (2026-08-20 outage).
+      - name: Assert static assets are present
+        run: |
+          COUNT=$(find public -type f | wc -l)
+          echo "public/ contains $COUNT files"
+          test -f public/index.html || { echo "::error::public/index.html missing"; exit 1; }
+          test "$COUNT" -ge 10 || { echo "::error::only $COUNT files in public/ — refusing to deploy"; exit 1; }
+
+      - name: Deploy worker + assets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@4 deploy --keep-vars
+
+      - name: Verify live site
+        run: |
+          sleep 15
+          FAIL=0
+          for p in / /about /contact /coverage/homeowners /coverage/commercial /coverage/auto-umbrella /coverage/builders-risk /robots.txt; do
+            CODE=$(curl -sL -o /tmp/body -w "%{http_code}" --max-time 30 "https://prosperitynationalinsurance.com$p")
+            SIZE=$(wc -c < /tmp/body)
+            echo "$p -> $CODE ${SIZE}b"
+            if [ "$CODE" != "200" ] || [ "$SIZE" -lt 200 ]; then
+              echo "::error::$p returned $CODE with ${SIZE} bytes"
+              FAIL=1
+            fi
+          done
+          exit $FAIL

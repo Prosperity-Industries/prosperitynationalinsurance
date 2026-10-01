@@ -11,29 +11,57 @@
   if (!grid) return;
 
   var loaded = false;
-  var prefill = { name: '', email: '' };
+
+  // ---- Booking attribution --------------------------------------------
+  // Drip emails land here with ?a1=<Forge Prospect id>&utm_*&name&email
+  // (bookingUrl() in Forge insurance-flows.ts); the contact form adds the id
+  // of the Prospect it just created. Every Calendly link carries utm_* plus
+  // utm_content = that id, so Calendly records it on the booking and Forge's
+  // Calendly sync can tie the appointment back to the exact Prospect.
+  var UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  var qs = new URLSearchParams(location.search);
+  var firstTouch = {};
+  try { firstTouch = JSON.parse(sessionStorage.getItem('pni_attribution') || '{}') || {}; } catch (_) {}
+  function pick(k) { return qs.get(k) || firstTouch[k] || ''; }
+  var prefill = {
+    name:   qs.get('name')  || '',
+    email:  qs.get('email') || '',
+    itemId: [qs.get('a1'), pick('utm_content')].filter(function (v) { return v && UUID_RE.test(v); })[0] || '',
+    utm_source:   pick('utm_source') || 'website',
+    utm_medium:   pick('utm_medium') || 'contact-page',
+    utm_campaign: pick('utm_campaign'),
+  };
 
   function appendPrefill(url, p) {
-    if (!p || (!p.name && !p.email)) return url;
     try {
       var u = new URL(url);
       if (p.name)  u.searchParams.set('name',  p.name);
       if (p.email) u.searchParams.set('email', p.email);
+      ['utm_source', 'utm_medium', 'utm_campaign'].forEach(function (k) {
+        if (p[k]) u.searchParams.set(k, p[k]);
+      });
+      if (p.itemId && UUID_RE.test(p.itemId)) {
+        u.searchParams.set('utm_content', p.itemId);
+        u.searchParams.set('a1', p.itemId);
+      }
       return u.toString();
     } catch (_) { return url; }
   }
 
   // Form-submit handler will call this once the lead is in.
   window.setSchedulerPrefill = function (next) {
-    prefill = Object.assign(prefill, next || {});
+    Object.keys(next || {}).forEach(function (k) { if (next[k]) prefill[k] = next[k]; });
     grid.querySelectorAll('a.slot-btn[data-url]').forEach(function (a) {
       a.href = appendPrefill(a.dataset.url, prefill);
     });
     var cta = document.getElementById('scheduleCta');
-    if (cta && cta.dataset.baseHref) {
+    if (cta) {
+      if (!cta.dataset.baseHref) cta.dataset.baseHref = cta.getAttribute('href');
       cta.href = appendPrefill(cta.dataset.baseHref, prefill);
     }
   };
+  // Tag the fallback button right away (it shows when availability is empty).
+  window.setSchedulerPrefill({});
 
   function fmtTime(d) {
     return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
@@ -111,7 +139,10 @@
         var slots = (res.j && res.j.slots) || [];
         if (res.j && res.j.scheduling_base) {
           var cta = document.getElementById('scheduleCta');
-          if (cta) cta.dataset.baseHref = res.j.scheduling_base;
+          if (cta) {
+            cta.dataset.baseHref = res.j.scheduling_base;
+            cta.href = appendPrefill(cta.dataset.baseHref, prefill);
+          }
         }
         render(slots);
       })

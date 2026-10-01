@@ -68,10 +68,14 @@
 
       showStatus('success', 'Thanks — your request is in. Now pick a time below and we\'ll call you then.');
       // Layer prefill onto every slot button + the CTA, then scroll to the grid.
+      // item_id = the Forge Prospect just created; it rides on the Calendly
+      // link as utm_content so the booking ties back to this record.
+      const lead = await res.json().catch(() => ({}));
       if (typeof window.setSchedulerPrefill === 'function') {
         window.setSchedulerPrefill({
-          name:  (data.first_name + ' ' + data.last_name).trim(),
-          email: data.email,
+          name:   (data.first_name + ' ' + data.last_name).trim(),
+          email:  data.email,
+          itemId: (lead && lead.item_id) || '',
         });
       }
       const sched = document.getElementById('slotGrid');

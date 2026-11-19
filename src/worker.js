@@ -314,7 +314,7 @@ ${statusLine}
 
   if (env.SENDGRID_API_KEY) {
     try {
-      await fetch('https://api.sendgrid.com/v3/mail/send', {
+      const sg = await fetch('https://api.sendgrid.com/v3/mail/send', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${env.SENDGRID_API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -325,8 +325,17 @@ ${statusLine}
           content: [{ type: 'text/html', value: html }],
         }),
       });
-      return;
-    } catch (e) { /* fall through */ }
+      if (sg.ok) {
+        console.log('[forward] sendgrid ok', sg.status, ctx.isSpam ? 'spam' : 'lead', ctx.subject || '');
+        return;
+      }
+      // 2026-11-19: two forwards (11/2, 11/8) never arrived and nothing said
+      // why. Log SendGrid's answer so Workers Logs shows the reason.
+      const detail = await sg.text().catch(() => '');
+      console.error('[forward] sendgrid failed', sg.status, detail.slice(0, 500), ctx.subject || '');
+    } catch (e) {
+      console.error('[forward] sendgrid threw', String((e && e.message) || e));
+    }
   }
   if (env.RESEND_API_KEY) {
     try {
